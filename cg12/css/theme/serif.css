@@ -10,6 +10,7 @@
  *********************************************/
 body {
   background: #f0f1eb;
+  background-color: #f0f1eb;
 }
 
 .reveal {
@@ -65,7 +66,6 @@ body {
   color: #8b7c69;
   text-shadow: none;
   border: none;
-  border-radius: 2px;
 }
 
 .reveal .roll span:after {

@@ -1,19 +1,11 @@
 /*!
- * reveal.js 2.1 r35
+ * reveal.js 2.1 r37
  * http://lab.hakim.se/reveal-js
  * MIT licensed
  *
  * Copyright (C) 2011-2012 Hakim El Hattab, http://hakim.se
  */
 var Reveal = (function(){
-
-	Reveal.addEventListener( 'slidechanged', function( event ) {
-		// event.previousSlide, event.currentSlide, event.indexh, event.indexv
-		var notes = event.currentSlide.querySelector(".notes");
-		if(notes) {
-			console.info(notes.innerHTML.replace(/\n\s+/g,'\n'));
-		}
-	} );
 
 	'use strict';
 
@@ -239,8 +231,10 @@ var Reveal = (function(){
 
 		// Called once synchronous scritps finish loading
 		function proceed() {
-			// Load asynchronous scripts
-			head.js.apply( null, scriptsAsync );
+			if( scriptsAsync.length ) {
+				// Load asynchronous scripts
+				head.js.apply( null, scriptsAsync );
+			}
 
 			start();
 		}
@@ -276,12 +270,15 @@ var Reveal = (function(){
 		// Start auto-sliding if it's enabled
 		cueAutoSlide();
 
-		// Notify listeners that the presentation is ready
-		dispatchEvent( 'ready', {
-			'indexh': indexh, 
-			'indexv': indexv,
-			'currentSlide': currentSlide
-		} );
+		// Notify listeners that the presentation is ready but use a 1ms
+		// timeout to ensure it's not fired synchronously after #initialize()
+		setTimeout( function() {
+			dispatchEvent( 'ready', {
+				'indexh': indexh,
+				'indexv': indexv,
+				'currentSlide': currentSlide
+			} );
+		}, 1 );
 	}
 
 	/**
@@ -1019,28 +1016,28 @@ var Reveal = (function(){
 
 	function navigateLeft() {
 		// Prioritize hiding fragments
-		if( isOverviewActive() || previousFragment() === false ) {
+		if( availableRoutes().left && ( isOverviewActive() || previousFragment() === false ) ) {
 			slide( indexh - 1, 0 );
 		}
 	}
 
 	function navigateRight() {
 		// Prioritize revealing fragments
-		if( isOverviewActive() || nextFragment() === false ) {
+		if( availableRoutes().right && ( isOverviewActive() || nextFragment() === false ) ) {
 			slide( indexh + 1, 0 );
 		}
 	}
 
 	function navigateUp() {
 		// Prioritize hiding fragments
-		if( isOverviewActive() || previousFragment() === false ) {
+		if( availableRoutes().up && ( isOverviewActive() || previousFragment() === false ) ) {
 			slide( indexh, indexv - 1 );
 		}
 	}
 
 	function navigateDown() {
 		// Prioritize revealing fragments
-		if( isOverviewActive() || nextFragment() === false ) {
+		if( availableRoutes().down && ( isOverviewActive() || nextFragment() === false ) ) {
 			slide( indexh, indexv + 1 );
 		}
 	}
@@ -1062,7 +1059,7 @@ var Reveal = (function(){
 				var previousSlide = document.querySelector( '.reveal .slides>section.past:nth-child(' + indexh + ')' );
 
 				if( previousSlide ) {
-					indexv = ( previousSlide.querySelectorAll('section').length + 1 ) || 0;
+					indexv = ( previousSlide.querySelectorAll( 'section' ).length + 1 ) || 0;
 					indexh --;
 					slide();
 				}
@@ -1096,9 +1093,14 @@ var Reveal = (function(){
 	 * @param {Object} event
 	 */
 	function onDocumentKeyDown( event ) {
-		// Disregard the event if the target is editable or a
-		// modifier is present
-		if ( document.querySelector( ':focus' ) !== null || event.shiftKey || event.altKey || event.ctrlKey || event.metaKey ) return;
+		// Check if there's a focused element that could be using 
+		// the keyboard
+		var activeElement = document.activeElement;
+    	var hasFocus = !!( document.activeElement && ( document.activeElement.type || document.activeElement.href || document.activeElement.contentEditable !== 'inherit' ) );
+
+		// Disregard the event if there's a focused element or a 
+		// keyboard modifier key is present
+		if ( hasFocus || event.shiftKey || event.altKey || event.ctrlKey || event.metaKey ) return;
 
 		var triggered = true;
 
@@ -1324,6 +1326,8 @@ var Reveal = (function(){
 		down: navigateDown,
 		prev: navigatePrev,
 		next: navigateNext,
+		prevFragment: previousFragment,
+		nextFragment: nextFragment,
 
 		// Deprecated aliases
 		navigateTo: slide,

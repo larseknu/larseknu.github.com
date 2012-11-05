@@ -6,6 +6,7 @@
 
 body {
 	@include bodyBackground();
+	background-color: $backgroundColor;
 }
 
 .reveal {
@@ -67,7 +68,6 @@ body {
 		
 		text-shadow: none;
 		border: none;
-		border-radius: 2px;
 	}
 
 .reveal .roll span:after {
